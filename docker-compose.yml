@@ -1,0 +1,44 @@
+version: '3.11'
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_DB=social_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=7034
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./backend:/backend
+    depends_on:
+      - db
+    command: >
+         sh -c "python manage.py wait_for_db &&
+                python manage.py migrate &&
+                python manage.py runserver 0.0.0.0:8000"
+  frontend:
+    build:
+      context: ./social_frontend
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./social_frontend/src:/social_frontend/src
+    depends_on:
+      - backend
+    command: sh -c "npm run dev"
+  db:
+    image: postgres:latest
+    ports:
+      - '5432:5432'
+    volumes:
+      - social_db:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=social_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=7034
+    container_name: social_db
+volumes:
+  social_db:
